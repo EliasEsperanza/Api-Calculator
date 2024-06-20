@@ -17,7 +17,7 @@ def hermite_view(request):
     x_values = request.data['x_values']
     y_values = request.data['y_values']
     derivatives = request.data['derivatives']
-    z, q, steps = hermite_interpolation(x_values, y_values, derivatives)
+    z, q, steps, plot_x, plot_y = hermite_interpolation(x_values, y_values, derivatives)
 
     q_formatted = []
     for row in q:
@@ -25,7 +25,11 @@ def hermite_view(request):
 
     response_data = {
         "Puntos de interpolacion (z)": z,
-        "Tabla de diferencias divididas (q)": q_formatted
+        "Tabla de diferencias divididas (q)": q_formatted,
+        "plot_data": {
+            "x": plot_x,
+            "y": plot_y
+        }
     }
 
     if request.user.is_authenticated:
@@ -48,12 +52,16 @@ def runge_kutta_view(request):
         def func(x, y):
             return eval(function, {"__builtins__": {}}, {'x': x, 'y': y})
         
-        result, steps = runge_kutta(func, y0, x0, x_end, h)
+        result, steps, plot_x, plot_y = runge_kutta(func, y0, x0, x_end, h)
         
         formatted_result = [{"x": x, "y": y} for x, y in result]
         
         response_data = {
-            "result": formatted_result
+            "result": formatted_result,
+            "plot_data": {
+                "x": plot_x,
+                "y": plot_y
+            }
         }
 
         if request.user.is_authenticated:
