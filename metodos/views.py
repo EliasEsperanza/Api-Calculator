@@ -1,7 +1,7 @@
 # views.py
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import TokenAuthentication
 from django.http import JsonResponse
 from .hermite import hermite_interpolation
@@ -11,11 +11,13 @@ from .models import CalculationHistory
 from .serializers import CalculationHistorySerializer
 
 @api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([AllowAny])
 def hermite_view(request):
     x_values = request.data['x_values']
     y_values = request.data['y_values']
     derivatives = request.data['derivatives']
-    z, q = hermite_interpolation(x_values, y_values, derivatives)
+    z, q, steps = hermite_interpolation(x_values, y_values, derivatives)
 
     q_formatted = []
     for row in q:
@@ -26,9 +28,15 @@ def hermite_view(request):
         "Tabla de diferencias divididas (q)": q_formatted
     }
 
+    if request.user.is_authenticated:
+        response_data["Pasos del calculo"] = steps
+
     return Response(response_data)
 
+
 @api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([AllowAny])
 def runge_kutta_view(request):
     try:
         y0 = float(request.data['initialValue'])
@@ -40,14 +48,21 @@ def runge_kutta_view(request):
         def func(x, y):
             return eval(function, {"__builtins__": {}}, {'x': x, 'y': y})
         
-        result = runge_kutta(func, y0, x0, x_end, h)
-        
+        result, steps = runge_kutta(func, y0, x0, x_end, h)
         
         formatted_result = [{"x": x, "y": y} for x, y in result]
         
-        return Response({"result": formatted_result})
+        response_data = {
+            "result": formatted_result
+        }
+
+        if request.user.is_authenticated:
+            response_data["steps"] = steps
+
+        return Response(response_data)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+
 
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
