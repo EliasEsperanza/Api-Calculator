@@ -1,3 +1,5 @@
+import numpy as np
+
 def hermite_interpolation(x_values, y_values, derivatives):
     n = len(x_values)
     q = [[0] * (2 * n) for _ in range(2 * n)]
@@ -23,6 +25,20 @@ def hermite_interpolation(x_values, y_values, derivatives):
             q[i][j] = (q[i][j - 1] - q[i - 1][j - 1]) / (z[i] - z[i - j])
             steps.append(f"q[{i}][{j}] = (q[{i}][{j - 1}] - q[{i - 1}][{j - 1}]) / (z[{i}] - z[{i - j}]) = {q[i][j]}")
 
-    return z, q, steps
+    # Datos para grafica
+    plot_x = np.linspace(min(x_values), max(x_values), 100).tolist()
+    plot_y = [evaluate_hermite(z, q, xi) for xi in plot_x]
+
+    return z, q, steps, plot_x, plot_y
+
+def evaluate_hermite(z, q, xi):
+    n = len(z) // 2
+    result = q[0][0]
+    product = 1
+    for i in range(1, 2 * n):
+        product *= (xi - z[i - 1])
+        result += q[i][i] * product
+    return result
+
 
 

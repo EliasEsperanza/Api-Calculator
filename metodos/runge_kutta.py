@@ -20,5 +20,10 @@ def runge_kutta(f, y0, x0, x_end, h):
 
         results.append((x, y))
 
-    return results, steps
+    # Datos para grafica
+    plot_x = [x for x, y in results]
+    plot_y = [y for x, y in results]
+
+    return results, steps, plot_x, plot_y
+
 
